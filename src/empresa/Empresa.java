@@ -1,5 +1,7 @@
 package empresa;
 
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.ArrayList;
 
 import Domicilio.Domicilio;
@@ -20,16 +22,19 @@ import servicio.Servicio;
 /**
  * 
  * @author bruno trinitario,Alan Juares,Juan Basualdo,Juan Olave
- *esta clase es la encargada de manejar nuestro sistema, aniadir y quitar abonados, domicilios
+ *esta clase es la encargada de manejar nuestro sistema, añadir y quitar abonados, domicilios
  *facturas y contrataciones. junto con la posibilidad de poder clonar determinada factura
  */
 
 public class Empresa {
 	private static Empresa instance = null;
-	private ArrayList<Abonado> listaEmpresa = new ArrayList<Abonado>();
-	private ArrayList<Contrataciones> listaContrataciones = new ArrayList<Contrataciones>();
-	private ArrayList<Factura> listaFactura = new ArrayList<Factura>();
+	private ArrayList<Abonado> listaAbonado = new ArrayList<Abonado>();
+	private ArrayList<Contratacion> listaContrataciones = new ArrayList<Contratacion>();
+	private ArrayList<Tecnico> listaTecnico = new ArrayList<Tecnico>();
 	private FactoryPago creacion = new FactoryPago();
+	private LocalDate fecha = LocalDate.now();
+	private MesaDeSolicitudDeTecnicos mesaDeSolicitudDeTecnicos;
+
 
 	/**
 	 * Este metodo garantiza que solo exista una instancia de la clase empresa<br>
@@ -56,8 +61,7 @@ public class Empresa {
 	public void agregaAbonado(Abonado abonado, String tipodepago) throws FactoryInvalidoException {
 		assert abonado != null : "El abonado debe ser distinto de null";
 		assert tipodepago != null : "El tipo de pago debe ser distinto de null";
-		listaEmpresa.add(abonado);
-		crearFactura(abonado, tipodepago);
+		listaAbonado.add(abonado);
 	}
 	/**
 	 * Este metodo crea y agrega una factura a la lista de facturas.<br>
@@ -76,28 +80,14 @@ public class Empresa {
 
 		assert abonado != null : "El abonado debe ser distinto de null";
 		assert tipodepago != null : "El tipo de pago debe ser distinto de null";
-		DecoratorPago aux = creacion.getMetodoDePago(abonado, tipodepago);
-		Factura factura = new Factura(aux);
-		aniadirFactura(factura);
+		IFactura factura = new Factura(abonado);
+		abonado.addFactura(factura);
 	}
-	/**
-	 * Este metodo cambia el metodo de pago de un abonado.<br>
-	 * <br>
-	 * <b>Pre</b>: la factura debe ser disntinto de null. El abonado debe ser
-	 * distinto de null al igual que tipodepago.<br>
-	 * <b>Inv</b>: la factura y el abonado estan en las listas.<br>
-	 * <b>Post</b>: se actualiza el metodo de pago de la factura del abonado.<br>
-	 * 
-	 * @param factura    es la factura que cambiara su metodo de pago.<br>
-	 * @param abonado    es el abonado de la factura.<br>
-	 * @param tipodepago el metodo de pago nuevo para la factura.<br>
-	 * @throws FactoryInvalidoException si el tipo de pago fue incorrecto o no
-	 *                                  existente.<br>
-	 */
-	public void cambiarMetodoPago(Factura factura, Abonado abonado, String tipodepago) throws FactoryInvalidoException {
-		DecoratorPago aux = creacion.getMetodoDePago(abonado, tipodepago);
-		factura.setAbonado(aux);
-	}
+	public void pagaFactura(Abonado abonado,IFactura factura) {
+        factura.setFechaDePago(this.fecha);
+        abonado.PagoEstado(factura, fecha);
+    }
+
 	/**
 	 * Este metodo agrega domicilio un abonado.<br>
 	 * <br>
@@ -153,28 +143,13 @@ public class Empresa {
 	 */
 	public void quitaAbonado(Abonado abonado) throws AbonadoInexistenteException{
 		assert abonado != null : "El abonado debe ser distinto de null";
-		if(this.listaEmpresa.contains(abonado)==true)
-			this.listaEmpresa.remove(abonado);
+		if(this.listaAbonado.contains(abonado)==true)
+			this.listaAbonado.remove(abonado);
 		else
 			throw new AbonadoInexistenteException("el Abonado no se encuentra en la lista",abonado);
 	}
+	
 
-	/**
-	 * Este metodo quita una factura de la lista.<br>
-	 * <br>
-	 * <b>Pre</b>: la factura debe ser distinta de null.<br>
-	 * <b>Inv</b>: la factura esta en la lista.<br>
-	 * <b>Post</b>: se quita la factura de la lista.<br>
-	 * 
-	 * @param factura es la factura que queremos quitar del sistema.<br>
-	 */
-	public void EliminarFactura(Factura factura)throws FacturaInexistenteException {
-		assert factura != null : "La factura debe ser distinto de null";
-		if(this.listaFactura.contains(factura))
-			this.listaFactura.remove(factura);
-		else
-			throw new FacturaInexistenteException("Factura inexistente",factura);		
-	}
 	/**
 	 * Este metodo crea una contratacion la añade a la lista y a la facutra
 	 * correspondiente.<br>
@@ -197,7 +172,7 @@ public class Empresa {
 		assert abonado != null : "El abonado debe ser distinto de null";
 		assert domicilio != null : "El domicilio debe ser distinto de null";
 		if (abonado.existeDomicilio(domicilio) == true && domicilio.isAgregado() == true) {
-			Contrataciones contrato = new Contrataciones(domicilio);
+			Contratacion contrato = new Contratacion(domicilio);
 			abonado.aniadirContratacion(contrato);
 			aniadirContratacion(contrato, abonado);
 		} else
@@ -237,19 +212,7 @@ public class Empresa {
 		if(this.listaContrataciones.get(i).getDomicilio()!=null)
 			this.listaContrataciones.get(i).setPromo(promo);
 	}
-	/**
-	 * Este metodo agrega una factura a la lista de abonados.<br>
-	 * <br>
-	 * <b>Pre</b>: la factura debe ser distinta de null.<br>
-	 * <b>Inv</b>: la factura a agregar no esta en la lista.<br>
-	 * <b>Post</b>: se añade una factura a la lista.<br>
-	 * 
-	 * @param factura es la factura nueva que vamos a añadir.<br>
-	 */
-	private void aniadirFactura(Factura factura) {
-		assert factura!=null:"La factura debe ser distinta de null";
-		this.listaFactura.add(factura);
-	}
+
 	/**
 	 * Este metodo agrega una contratacion a la lista de contrataciones.<br>
 	 * <br>
@@ -259,7 +222,7 @@ public class Empresa {
 	 * 
 	 * @param contrato es el contrato que se añade.<br>
 	 */
-	private void aniadirContratacion(Contrataciones contrato, Abonado abonado) {
+	private void aniadirContratacion(Contratacion contrato, Abonado abonado) {
 		this.listaContrataciones.add(contrato);
 	}
 	/**
@@ -271,16 +234,118 @@ public class Empresa {
 	 * 
 	 * @param contrato es el contrato que se añade.<br>
 	 */
-	public Factura getFactura(Abonado abonado) {
-		int i=0;
-		assert abonado != null : "El abonado debe ser distinto de null";
-		
-		while (this.listaFactura.get(i).getAbonado().getAbonadotype()!=abonado)
-			i++;
-		if (this.listaFactura.get(i)!=null)
-			return this.listaFactura.get(i);
-		else
-			return null;
+	
+	public void actualizaEstado(LocalDate fechaRecibida) throws FactoryInvalidoException {
+		LocalDate fechaMasReciente;
+		Period periodo;
+		LocalDate fechaAux=fecha;
+
+		 for(int i=0;i<listaAbonado.size();i++) {
+			 if (!listaAbonado.get(i).getListaDeContrataciones().isEmpty()) {
+				 fecha=fechaAux;
+				 fechaMasReciente=listaAbonado.get(i).fechaReciente();
+				 periodo = Period.between(fechaMasReciente,fechaRecibida);
+				 for(int j=0;j<(periodo.getMonths()+periodo.getYears()*12);j++) {
+					 fecha=fecha.plusMonths(1);
+					 crearFactura(listaAbonado.get(i),"Impago");
+				 }
+				 listaAbonado.get(i).cambiaEstado();
+				 }
+		 }
+		 fecha=fechaRecibida;
+		 for (Abonado abonado : listaAbonado)
+			 for (IFactura factura : abonado.getListaDeFacturas()){
+				 if (!factura.isPago()) {
+					 Period fechaAux2 = Period.between(factura.getFechaDeEmision(),fecha);
+					 if (fechaAux2.getMonths()+fechaAux2.getYears()*12 > 0)
+						 factura.setInteresPorMora(true);
+			 }
+		 }
+
+	}
+	/**
+	 * Devuelve el factory pago<br>
+	 * <br>
+	 * <b>Pre</b>.<br>
+	 * <b>Inv</b>:<br>
+	 * <b>Post</b>:<br>
+	 * 
+	 * @return factory pago <br>
+	 */
+	
+	public FactoryPago getCreacion() {
+		return creacion;
+	}
+	
+	/**
+	 * Setea el factory pago<br>
+	 * <br>
+	 * <b>Pre</b>: <br>
+	 * <b>Inv</b>: FactoryPago<br>
+	 * <b>Post</b>: Se setea el factory pago<br>
+	 * 
+	 * @param FactoyPago.<br>
+	 */
+	public void setCreacion(FactoryPago creacion) {
+		this.creacion = creacion;
+	}
+
+	/**
+	 * Se setea la lista de abonados.<br>
+	 * <br>
+	 * <b>Pre</b>: <br>
+	 * <b>Inv</b>: Lista de abonados<br>
+	 * <b>Post</b>: Se setea la lista de abonados<br>
+	 * 
+	 * @param array list de abonados.<br>
+	 */
+	public void setListaAbonado(ArrayList<Abonado> listaAbonado) {
+		this.listaAbonado = listaAbonado;
+	}
+	
+	/**
+	 * Setea la lista de contrataciones.<br>
+	 * <br>
+	 * <b>Pre</b>: <br>
+	 * <b>Inv</b>: lista de contrataciones<br>
+	 * <b>Post</b>:<br>
+	 * 
+	 * @param Array list de contrataciones.<br>
+
+	 */
+	public void setListaContrataciones(ArrayList<Contratacion> listaContrataciones) {
+		this.listaContrataciones = listaContrataciones;
+	}
+
+	/**
+	 * Devuelve la lista de abonados.<br>
+	 * <br>
+	 * <b>Pre</b>: <br>
+	 * <b>Inv</b>: <br>
+	 * <b>Post</b>: Devuelva la lista de abonados<br>
+	 * 
+	 * @return Array list de abonados.<br>
+	 */
+	public ArrayList<Abonado> getListaAbonado() {
+		return listaAbonado;
+	}
+	public ArrayList<Contratacion> getListaContrataciones() {
+		return listaContrataciones;
+	}
+
+	public ArrayList<Tecnico> getListaTecnico() {
+		return listaTecnico;
+	}
+	public void setListaTecnico(ArrayList<Tecnico> listaTecnico) {
+		this.listaTecnico = listaTecnico;
+	}
+	
+	public void addTecnico(Tecnico tecnico) {
+		this.listaTecnico.add(tecnico);
+	}
+	
+	public void removeTecnico(Tecnico tecnico) {
+		this.listaTecnico.remove(tecnico);
 	}
 	/**
 	 * Este metodo clona una determinada factura.<br>
@@ -293,8 +358,46 @@ public class Empresa {
 	 * @throws CloneNotSupportedException no se pudo clonar la factura.<br>
 	 * @return clon determinada factura.<br>
 	 */
-	public Object ClonarFactura(Factura factura) throws CloneNotSupportedException {
-		Factura clon = (Factura) factura.clone();
+	public Object ClonarFactura(IFactura factura) throws CloneNotSupportedException {
+		IFactura clon = (IFactura) factura.clone();
 		return clon;
 	}
+	public LocalDate getFecha() {
+		return fecha;
+	}
+	public void setFecha(LocalDate fecha) {
+		this.fecha = fecha;
+	}
+	public MesaDeSolicitudDeTecnicos getMesaDeSolicitudDeTecnicos() {
+		// TODO Auto-generated method stub
+		return this.mesaDeSolicitudDeTecnicos;
+	}
+	public void setMesaDeSolicitudDeTecnicos(MesaDeSolicitudDeTecnicos mesaDeSolicitudDeTecnicos) {
+		this.mesaDeSolicitudDeTecnicos = mesaDeSolicitudDeTecnicos;
+	}
+	public void eliminarContratacion(Abonado abonado, Contratacion contratacion) {
+
+		abonado.getListaDeContrataciones().remove(contratacion);
+		this.listaContrataciones.remove(contratacion);
+		abonado.cambiaEstado();
+	}
+	
+	public void eliminarServicio(Contratacion contratacion, Servicio servicio) {
+		contratacion.eliminarServicio(servicio);
+	}
+	public IFactura cambiarMetodoPago(IFactura factura, String tipoDePago) {
+		FactoryPago f = new FactoryPago();
+		IFactura aux=null;
+		try {
+			aux = f.getMetodoDePago(factura, tipoDePago);
+		} catch (FactoryInvalidoException e) {
+			e.printStackTrace();
+		}
+		return aux;
+		
+	}
+	public void addAbonado(Abonado abonado) {
+		this.listaAbonado.add(abonado);	
+	}
+
 }

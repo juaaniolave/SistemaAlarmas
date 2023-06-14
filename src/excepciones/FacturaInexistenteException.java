@@ -1,14 +1,15 @@
 package excepciones;
 
 import empresa.Factura;
+import empresa.IFactura;
 
 public class FacturaInexistenteException extends Exception {
-	private Factura factura;
-	public FacturaInexistenteException(String mensaje,Factura factura) {
+	private IFactura factura;
+	public FacturaInexistenteException(String mensaje,IFactura factura) {
 		super(mensaje);
 		this.factura=factura;
 	}
-	public Factura getFactura() {
+	public IFactura getFactura() {
 		return factura;
 	}
 	

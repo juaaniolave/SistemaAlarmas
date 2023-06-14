@@ -1,5 +1,7 @@
 package empresa;
 
+import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.ArrayList;
 
 import Domicilio.Domicilio;
@@ -9,13 +11,13 @@ import servicio.Servicio;
  * esta clase determinar las carateristicas de la contratacion, si tiene o no promo,
  * cual/es servicios posee y bajo que domicilio funciona
  */
-public class Contrataciones implements Cloneable {
+public class Contratacion implements Cloneable, Serializable {
 	protected Promo promo = null;
 	private ArrayList<Servicio> listaServicio = new ArrayList<Servicio>();
 	private Domicilio domicilio;
 	public static int counter = 0;
 	private int id;
-
+	private LocalDate fechaContratacion;
 	/**
 	 * Este es el contructor de la clase el cual aumenta el id en 1 por cada
 	 * instancia.<br>
@@ -26,11 +28,16 @@ public class Contrataciones implements Cloneable {
 	 * 
 	 * @param domicilio es el valor que se le asignara al atributo
 	 */
-	public Contrataciones(Domicilio domicilio) {
+	public Contratacion(Domicilio domicilio) {
 		assert domicilio != null : "El domicilio debe ser distinto de NULL";
 		this.domicilio = domicilio;
 		counter++;
 		this.id = counter;
+		this.fechaContratacion=Empresa.getInstance().getFecha();
+	}
+	
+	public LocalDate getFechaContratacion() {
+		return fechaContratacion;
 	}
 
 	/**
@@ -170,7 +177,7 @@ public class Contrataciones implements Cloneable {
 	 * @return clon un clon de la contratacion.<br>
 	 */
 	public Object clone() throws CloneNotSupportedException {
-		Contrataciones clon = (Contrataciones) super.clone();
+		Contratacion clon = (Contratacion) super.clone();
 		clon.domicilio = (Domicilio) this.domicilio.clone();
 		if (this.promo!=null)
 			clon.promo = (Promo) this.promo.clone();
@@ -183,4 +190,19 @@ public class Contrataciones implements Cloneable {
 		}
 		return clon;
 	}
+	public Promo getPromo() {
+		// TODO Auto-generated method stub
+		return promo;
+	}
+
+	public ArrayList<Servicio> getListaServicio() {
+		return this.listaServicio;
+	}
+	
+	public void eliminarServicio(Servicio servicio) {
+
+				this.listaServicio.remove(servicio);
+
+	}
+	
 }

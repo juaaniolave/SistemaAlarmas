@@ -1,8 +1,11 @@
 package Domicilio;
+
+import java.io.Serializable;
+
 /*
  *es el domicilio junto con su tipo (vivienda o comercio) el cual sera unico
  */
-public abstract class Domicilio implements Cloneable {
+public abstract class Domicilio implements Cloneable, Serializable {
 	private String nombre;
 	private boolean agregado = false;
 
@@ -86,6 +89,16 @@ public abstract class Domicilio implements Cloneable {
 	public Object clone() throws CloneNotSupportedException {
 		Domicilio clon = (Domicilio) super.clone();
 		return clon;
+	}
+
+	public boolean getAgregado() {
+		// TODO Auto-generated method stub
+		return this.agregado;
+	}
+
+	public String getNombre() {
+		// TODO Auto-generated method stub
+		return this.nombre;
 	}
 
 }

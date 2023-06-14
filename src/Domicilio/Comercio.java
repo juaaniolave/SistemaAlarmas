@@ -1,6 +1,8 @@
 package Domicilio;
 
-public class Comercio extends Domicilio {
+import java.io.Serializable;
+
+public class Comercio extends Domicilio implements Serializable {
 	public Comercio(String nombre) {
 		super(nombre);
 	}

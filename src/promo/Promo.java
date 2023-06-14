@@ -1,12 +1,14 @@
 package promo;
 
+import java.io.Serializable;
+
 import Domicilio.Domicilio;
 /*
  * clase implementada para funcionar como doble dispach con la clase domicilio
  * la cual hace que la contratacion mediante un domicilio permita acceder a una determinada
  * promo, las cuales se encargaran de hacer un descuento al total de esta.
  */
-public interface Promo {
+public interface Promo extends Serializable{
 	/**
 	 * <b>Pre</b>: El domicilio debe ser distinto de null.<br>
 	 * <b>Inv</b>: Domicilio.<br>
